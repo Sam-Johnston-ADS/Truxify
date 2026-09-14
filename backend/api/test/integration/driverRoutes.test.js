@@ -7,6 +7,8 @@ const m = createSupabaseMock();
 
 vi.mock('../../src/config/db.js', () => ({
   supabase: m.supabase,
+  supabaseAdmin: m.supabase,
+  createUserClient: () => m.supabase,
   firebaseAdmin: null,
   redisClient: null,
   mongoDb: null,
@@ -27,6 +29,7 @@ function buildApp() {
   const app = express();
   app.use(express.json());
   app.use('/api/drivers', driverRouter);
+  app.use('/api/driver', driverRouter);
   return app;
 }
 
@@ -42,7 +45,10 @@ describe('Driver Routes', () => {
     m.store.earnings_daily = [];
     m.store.trucks = [];
     m.store.orders = [];
+    m.store.trips = [];
+    m.store.audit_logs = [];
     m.calls.length = 0;
+    process.env.WITHDRAWAL_PAYOUT_PROVIDER = 'test';
   });
 
 
@@ -396,8 +402,6 @@ describe('Driver Routes', () => {
       .set(DRIVER_HEADERS)
       .send({ amount: 1000 });
 
-    delete process.env.WITHDRAWAL_PAYOUT_PROVIDER;
-
     expect(res.status).toBe(200);
 
     const rpcCall = m.calls.find(
@@ -607,6 +611,45 @@ describe('Driver Routes', () => {
         .set(validHeaders);
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /:driverId/earnings', () => {
+    const validDriverId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const validHeaders = {
+      'x-user-id': validDriverId,
+      'x-user-role': 'driver',
+    };
+
+    it('returns 400 with a validation error when driverId is not a UUID', async () => {
+      const app = buildApp();
+      const res = await request(app)
+        .get('/api/driver/not-a-uuid/earnings')
+        .set(validHeaders);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Validation failed');
+      expect(res.body.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            field: 'driverId',
+            message: 'Invalid ID format',
+          }),
+        ])
+      );
+    });
+
+    it('returns 200 and behaves as before when driverId is a valid UUID', async () => {
+      const app = buildApp();
+      const res = await request(app)
+        .get(`/api/driver/${validDriverId}/earnings`)
+        .set(validHeaders);
+
+      expect(res.status).toBe(200);
+      expect(res.body.period).toBe('week');
+      expect(res.body.driver_id).toBe(validDriverId);
+      expect(res.body).toHaveProperty('gross_earnings');
+      expect(res.body).toHaveProperty('net_earnings');
     });
   });
 

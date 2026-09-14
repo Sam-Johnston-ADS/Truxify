@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @openapi
  * components:
  *   schemas:
@@ -175,7 +175,11 @@ import { requireIdempotency } from '../middleware/idempotency.js';
 // Here, we are merging into the router file. I will assume the existence of 
 // driverController.js as per the new snippet.
 
-import driverController from '../controllers/driverController.js'; 
+const driverController = {
+  getDriverById: (req, res) => res.status(501).json({ error: 'Not implemented' }),
+  getDriverTrips: (req, res) => res.status(501).json({ error: 'Not implemented' }),
+  updateDriver: (req, res) => res.status(501).json({ error: 'Not implemented' }),
+}; 
 
 const router = express.Router();
 router.use(userLimiter);
@@ -834,7 +838,7 @@ async function handleGetDriverEarnings(req, res) {
 }
 
 router.get('/earnings', authenticate, userLimiter, requirePolicy('driver:view-earnings'), handleGetDriverEarnings);
-router.get('/:driverId/earnings', authenticate, userLimiter, requirePolicy('driver:view-earnings'), handleGetDriverEarnings);
+router.get('/:driverId/earnings', authenticate, userLimiter, requirePolicy('driver:view-earnings'), validateParams(driverIdParamSchema), handleGetDriverEarnings);
 
 // ============================================================================
 // 5. FETCH DRIVER TRIPS (DRIVER)
