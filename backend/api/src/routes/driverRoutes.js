@@ -175,11 +175,7 @@ import { requireIdempotency } from '../middleware/idempotency.js';
 // Here, we are merging into the router file. I will assume the existence of 
 // driverController.js as per the new snippet.
 
-const driverController = {
-  getDriverById: (req, res) => res.status(501).json({ error: 'Not implemented' }),
-  getDriverTrips: (req, res) => res.status(501).json({ error: 'Not implemented' }),
-  updateDriver: (req, res) => res.status(501).json({ error: 'Not implemented' }),
-}; 
+import driverController from '../controllers/driverController.js'; 
 
 const router = express.Router();
 router.use(userLimiter);

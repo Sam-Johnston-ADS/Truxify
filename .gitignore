@@ -74,3 +74,4 @@ dart_defines/*.env
 !dart_defines/*.env.example
 
 .git_corrupted/
+AGENTS.md.txt
